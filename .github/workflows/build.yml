@@ -18,9 +18,8 @@ jobs:
       - name: Build web UI
         run: |
           cd web
-          npm ci
-          npm run build
-          cd ..
+          yarn install
+          yarn build
 
       - name: Build firmware with ESP-IDF Docker
         uses: docker://espressif/idf:v5.2.1
