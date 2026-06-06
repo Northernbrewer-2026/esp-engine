@@ -8,4 +8,5 @@ export interface ITempSensor {
   compensateAbsolute: number;
   compensateRelative: number;
   lastTemp: number;
+  distillIndex: number; // 0=Cube, 1=Column, 2=TSA, 255=not used
 }
