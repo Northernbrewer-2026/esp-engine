@@ -20,6 +20,9 @@ public:
     float lastTemp;
     ds18b20_device_handle_t handle;
 
+    // ── Distilling role (0=Cube/Boiler, 1=Column, 2=TSA, 255=not used) ──
+    uint8_t distillIndex = 255;
+
     json to_json()
     {
         json jSensor;
@@ -32,6 +35,7 @@ public:
         jSensor["compensateAbsolute"] = this->compensateAbsolute;
         jSensor["compensateRelative"] = this->compensateRelative;
         jSensor["lastTemp"] = (double)((int)(this->lastTemp * 10)) / 10; // round float to 0.1 for display
+        jSensor["distillIndex"] = this->distillIndex;
 
         return jSensor;
     };
@@ -83,6 +87,12 @@ public:
 
         // will be set by detection
         this->connected = false;
+
+        // distilling sensor role
+        if (!jsonData["distillIndex"].is_null() && jsonData["distillIndex"].is_number())
+            this->distillIndex = (uint8_t)jsonData["distillIndex"];
+        else
+            this->distillIndex = 255;
     };
 
 protected:

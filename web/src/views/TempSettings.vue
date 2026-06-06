@@ -166,6 +166,19 @@ const save = async () => {
                     <v-row>
                       <v-text-field type="number" v-model.number="editedItem.compensateRelative" :label='t("tempSettings.compensate_rel")' />
                     </v-row>
+                    <!-- Distilling role assignment -->
+                    <v-row>
+                      <v-select
+                        v-model="editedItem.distillIndex"
+                        :items="[
+                          { title: t('tempSettings.distill_none'),   value: 255 },
+                          { title: t('tempSettings.distill_cube'),   value: 0 },
+                          { title: t('tempSettings.distill_column'), value: 1 },
+                          { title: t('tempSettings.distill_tsa'),    value: 2 },
+                        ]"
+                        :label='t("tempSettings.distill_role")'
+                      />
+                    </v-row>
                   </v-container>
                 </v-card-text>
 

@@ -17,6 +17,16 @@ const systemSettings = ref<ISystemSettings>({
   invertOutputs: false,
   mqttUri: "",
   temperatureScale: 0,
+  distill: {
+    triac: -1,
+    pump: -1,
+    mixer: -1,
+    alarmWater: -1,
+    alarmLevel: -1,
+    alarmGas: -1,
+    npgLevel: -1,
+    pressureSensor: -1,
+  },
 });
 
 // is same as enum TemperatureScale, but this wel never change, converting enum to options would be wastefull
@@ -224,6 +234,40 @@ const scaleChanged = () => {
         <v-col cols="12" md="3">
           <v-select :label='t("systemSettings.temperature_scale")' v-model="systemSettings.temperatureScale"
             :items="temperatureScales" @blur="scaleChanged" />
+        </v-col>
+      </v-row>
+
+      <!-- ── Distilling Pins ────────────────────────────────────────── -->
+      <v-row class="mt-4">
+        <v-col cols="12">
+          <div class="text-subtitle-1 font-weight-bold">{{ t("systemSettings.distill_pins_title") }}</div>
+          <div class="text-caption text-medium-emphasis mb-2">{{ t("systemSettings.distill_pins_subtitle") }}</div>
+        </v-col>
+      </v-row>
+      <v-row v-if="systemSettings.distill">
+        <v-col cols="12" md="2">
+          <v-text-field v-model.number="systemSettings.distill.triac"         :label="t('systemSettings.distill_triac')"    type="number" hint="-1 = disabled" persistent-hint />
+        </v-col>
+        <v-col cols="12" md="2">
+          <v-text-field v-model.number="systemSettings.distill.pump"          :label="t('systemSettings.distill_pump')"     type="number" hint="-1 = disabled" persistent-hint />
+        </v-col>
+        <v-col cols="12" md="2">
+          <v-text-field v-model.number="systemSettings.distill.mixer"         :label="t('systemSettings.distill_mixer')"    type="number" hint="-1 = disabled" persistent-hint />
+        </v-col>
+        <v-col cols="12" md="2">
+          <v-text-field v-model.number="systemSettings.distill.alarmWater"    :label="t('systemSettings.distill_alm_water')" type="number" hint="-1 = disabled" persistent-hint />
+        </v-col>
+        <v-col cols="12" md="2">
+          <v-text-field v-model.number="systemSettings.distill.alarmLevel"    :label="t('systemSettings.distill_alm_level')" type="number" hint="-1 = disabled" persistent-hint />
+        </v-col>
+        <v-col cols="12" md="2">
+          <v-text-field v-model.number="systemSettings.distill.alarmGas"      :label="t('systemSettings.distill_alm_gas')"  type="number" hint="-1 = disabled" persistent-hint />
+        </v-col>
+        <v-col cols="12" md="2">
+          <v-text-field v-model.number="systemSettings.distill.npgLevel"      :label="t('systemSettings.distill_npg')"      type="number" hint="-1 = disabled" persistent-hint />
+        </v-col>
+        <v-col cols="12" md="2">
+          <v-text-field v-model.number="systemSettings.distill.pressureSensor" :label="t('systemSettings.distill_pressure')" type="number" hint="-1 = disabled" persistent-hint />
         </v-col>
       </v-row>
 

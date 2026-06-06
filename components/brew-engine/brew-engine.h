@@ -43,6 +43,9 @@
 
 #include "nlohmann_json.hpp"
 
+// ── Distilling extension ──────────────────────────────────────────────────
+#include "distill-engine.h"
+
 #define ONEWIRE_MAX_DS18B20 10
 
 enum TemperatureScale
@@ -204,6 +207,9 @@ public:
     void Init();
 
     string Hostname;
+
+    // ── Distilling subsystem (public so main.cpp can query its valve list) ──
+    DistillEngine distillEngine;
 
     // callbacks
     std::function<json()> GetWifiSettingsJson;

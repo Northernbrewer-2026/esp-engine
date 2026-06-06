@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { mdiAltimeter, mdiCookieSettingsOutline, mdiFullscreen, mdiFullscreenExit, mdiHeatingCoil, mdiImport, mdiKnob, mdiReceiptTextClock, mdiThermometer, mdiThermometerLines, mdiWifi, mdiWrenchCogOutline } from "@mdi/js";
+import { mdiAltimeter, mdiCookieSettingsOutline, mdiFlask, mdiFullscreen, mdiFullscreenExit, mdiHeatingCoil, mdiImport, mdiKnob, mdiPipe, mdiReceiptTextClock, mdiThermometer, mdiThermometerLines, mdiTune, mdiWifi, mdiWrenchCogOutline } from "@mdi/js";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 const { t } = useI18n({ useScope: "global" });
@@ -10,16 +10,23 @@ const linksBrewing = ref([
   [mdiImport, t("links.import"), "import"],
 ]);
 
+// ── Distilling submenu ───────────────────────────────────────────────────
+const linksDistilling = ref([
+  [mdiFlask,  t("links.distill_control"),   "distillControl"],
+  [mdiTune,   t("links.distill_settings"),  "distillSettings"],
+  [mdiPipe,   t("links.valve_settings"),    "valveSettings"],
+]);
+
 const linksTools = ref([[mdiAltimeter, t("links.refractometer"), "refractometer"]]);
 
 const linksSettings = ref([
-  [mdiReceiptTextClock, t("links.schedules"), "mashschedules"],
-  [mdiThermometerLines, t("links.pid_settings"), "pidsettings"],
-  [mdiThermometer, t("links.temp_settings"), "tempsettings"],
-  [mdiHeatingCoil, t("links.heater"), "heaterSettings"],
-  [mdiWifi, t("links.wifi"), "wifiSettings"],
-  [mdiWrenchCogOutline, t("links.system"), "systemSettings"],
-  [mdiCookieSettingsOutline, t("links.client"), "clientSettings"],
+  [mdiReceiptTextClock, t("links.schedules"),     "mashschedules"],
+  [mdiThermometerLines, t("links.pid_settings"),  "pidsettings"],
+  [mdiThermometer,      t("links.temp_settings"), "tempsettings"],
+  [mdiHeatingCoil,      t("links.heater"),        "heaterSettings"],
+  [mdiWifi,             t("links.wifi"),           "wifiSettings"],
+  [mdiWrenchCogOutline, t("links.system"),         "systemSettings"],
+  [mdiCookieSettingsOutline, t("links.client"),   "clientSettings"],
 ]);
 
 const version = ref<string>(import.meta.env.VITE_APP_VERSION);
@@ -70,6 +77,15 @@ const exitFullscreen = () => {
 
         <v-list-subheader>{{$t("links.brewing")}}</v-list-subheader>
         <v-list-item v-for="[icon, text, route] in linksBrewing" :key="icon" link :to="route">
+          <template v-slot:prepend>
+            <v-icon>{{ icon }}</v-icon>
+          </template>
+          <v-list-item-title>{{ text }}</v-list-item-title>
+        </v-list-item>
+
+        <!-- Distilling section -->
+        <v-list-subheader>{{$t("links.distilling")}}</v-list-subheader>
+        <v-list-item v-for="[icon, text, route] in linksDistilling" :key="icon" link :to="route">
           <template v-slot:prepend>
             <v-icon>{{ icon }}</v-icon>
           </template>

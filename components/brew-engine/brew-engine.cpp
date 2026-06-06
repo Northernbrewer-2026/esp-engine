@@ -13,6 +13,7 @@ static const char *TAG = "BrewEngine";
 BrewEngine *mainInstance;
 
 BrewEngine::BrewEngine(SettingsManager *settingsManager)
+	: distillEngine(settingsManager)   // initialise distillEngine with the same NVS manager
 {
 	ESP_LOGI(TAG, "BrewEngine Construct");
 	this->settingsManager = settingsManager;
@@ -34,6 +35,9 @@ void BrewEngine::Init()
 	}
 
 	this->initHeaters();
+
+	// ── Distilling extension init ────────────────────────────────────────
+	this->distillEngine.Init(this->invertOutputs);
 
 	if (!this->stir_PIN)
 	{
@@ -1333,6 +1337,26 @@ void BrewEngine::readLoop(void *arg)
 
 		instance->temperature = avg;
 
+		// ── Feed live readings to the distilling subsystem ─────────────────
+		if (instance->distillEngine.running)
+		{
+			// Build a vector sized to the largest distillIndex in use.
+			// Sensors are assigned a role in Temperature Settings via distillIndex:
+			//   0 = Cube / Boiler  (DISTILL_TEMP_CUBE)
+			//   1 = Column         (DISTILL_TEMP_COLUMN)
+			//   2 = TSA            (DISTILL_TEMP_TSA)
+			// Sensors with distillIndex == 255 are ignored for distilling.
+			vector<float> distillTemps;
+			for (auto &[key, sensor] : instance->sensors)
+			{
+				if (!sensor->connected || sensor->distillIndex == 255) continue;
+				size_t idx = (size_t)sensor->distillIndex;
+				if (distillTemps.size() <= idx) distillTemps.resize(idx + 1, 0.0f);
+				distillTemps[idx] = sensor->lastTemp;
+			}
+			instance->distillEngine.UpdateTemperatures(distillTemps);
+		}
+
 		// when controlrun is true we need to keep out data
 		if (instance->controlRun)
 		{
@@ -2125,19 +2149,32 @@ string BrewEngine::processCommand(const string &payLoad)
 	}
 	else if (command == "GetSystemSettings")
 	{
+		// Distill pin settings merged in for a single unified system settings page
+		json distillPins = this->distillEngine.pins.to_json();
+
 		resultData = {
-			{"onewirePin", this->oneWire_PIN},
-			{"stirPin", this->stir_PIN},
-			{"buzzerPin", this->buzzer_PIN},
-			{"buzzerTime", this->buzzerTime},
-			{"invertOutputs", this->invertOutputs},
-			{"mqttUri", this->mqttUri},
-			{"temperatureScale", this->temperatureScale},
+			{"onewirePin",      this->oneWire_PIN},
+			{"stirPin",         this->stir_PIN},
+			{"buzzerPin",       this->buzzer_PIN},
+			{"buzzerTime",      this->buzzerTime},
+			{"invertOutputs",   this->invertOutputs},
+			{"mqttUri",         this->mqttUri},
+			{"temperatureScale",this->temperatureScale},
+			// ── Distilling pins (all exposed under system settings) ──────
+			{"distill", distillPins},
 		};
 	}
 	else if (command == "SaveSystemSettings")
 	{
 		this->saveSystemSettingsJson(data);
+
+		// ── Persist distilling pins if included ──────────────────────────
+		if (!data["distill"].is_null() && data["distill"].is_object())
+		{
+			this->distillEngine.pins.from_json(data["distill"]);
+			this->distillEngine.savePins();
+		}
+
 		message = "Please restart device for changes to have effect!";
 	}
 	else if (command == "Reboot")
@@ -2162,6 +2199,15 @@ string BrewEngine::processCommand(const string &payLoad)
 		{
 			xTaskCreate(&this->reboot, "reboot_task", 1024, this, 5, NULL);
 		}
+	}
+	// ── Distilling subsystem commands ─────────────────────────────────────
+	else if (command.rfind("Distill", 0) == 0 ||
+	         command == "GetDistillSettings"  || command == "SaveDistillSettings" ||
+	         command == "GetDistillPins"      || command == "SaveDistillPins"     ||
+	         command == "GetValveSettings"    || command == "SaveValveSettings")
+	{
+		// Delegate entirely to DistillEngine and return its response directly
+		return this->distillEngine.processDistillCommand(command, data);
 	}
 
 	json jResultPayload;

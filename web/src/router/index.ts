@@ -64,6 +64,22 @@ const routes = [
         name: "ClientSettings",
         component: () => import(/* webpackChunkName: "ClientSettings" */ "@/views/ClientSettings.vue"),
       },
+      // ── Distilling ────────────────────────────────────────────────────
+      {
+        path: "distillControl",
+        name: "DistillControl",
+        component: () => import(/* webpackChunkName: "DistillControl" */ "@/views/DistillControl.vue"),
+      },
+      {
+        path: "distillSettings",
+        name: "DistillSettings",
+        component: () => import(/* webpackChunkName: "DistillSettings" */ "@/views/DistillSettings.vue"),
+      },
+      {
+        path: "valveSettings",
+        name: "ValveSettings",
+        component: () => import(/* webpackChunkName: "ValveSettings" */ "@/views/ValveSettings.vue"),
+      },
     ],
   },
 ];
