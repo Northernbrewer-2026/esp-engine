@@ -39,6 +39,7 @@ const defaultSensor: ITempSensor = {
   compensateAbsolute: 0.0,
   compensateRelative: 1,
   lastTemp: 0,
+  distillIndex: 255,
 };
 
 const editedItem = ref<ITempSensor>(defaultSensor);
