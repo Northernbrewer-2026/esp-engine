@@ -29,27 +29,43 @@ jobs:
             -c "
             . /opt/esp/idf/export.sh &&
             idf.py build &&
+            echo '--- Generating correct ota_data_initial.bin ---' &&
+            python3 -c \"
+            import struct, zlib
+            # ESP32 OTA data: seq=1 (ota_0 valid), rest 0xFF, with CRC32
+            seq = 1
+            data = struct.pack('<I', seq) + b'\\xff' * 20
+            crc = zlib.crc32(data) & 0xffffffff
+            entry = data + struct.pack('<I', crc)
+            # Pad to 32 bytes, then fill 4096 bytes
+            entry = entry.ljust(32, b'\\xff')
+            sector = entry + b'\\xff' * (4096 - 32)
+            # Two sectors = 8KB OTA data partition
+            with open('build/ota_data_initial.bin', 'wb') as f:
+                f.write(sector + b'\\xff' * 4096)
+            print('ota_data_initial.bin written')
+            \" &&
             echo '--- Merging into single flashable binary ---' &&
             esptool.py --chip esp32 merge_bin \
-              --output build/esp-brew-engine-merged.bin \
+              --output build/esp-brew-engine-distill-merged.bin \
               --flash_mode dio \
               --flash_freq 40m \
               --flash_size 4MB \
-              0x1000  build/bootloader/bootloader.bin \
-              0x8000  build/partition_table/partition-table.bin \
-              0x35000 build/ota_data_initial.bin \
+              0x1000   build/bootloader/bootloader.bin \
+              0x8000   build/partition_table/partition-table.bin \
+              0x35000  build/ota_data_initial.bin \
               0x110000 build/esp-brew-engine.bin &&
-            echo 'Merged binary size:' &&
-            ls -lh build/esp-brew-engine-merged.bin
+            echo 'Done. Size:' &&
+            ls -lh build/esp-brew-engine-distill-merged.bin
             "
 
-      - name: Upload firmware binaries
+      - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
           name: esp-brew-engine-distill-firmware
           retention-days: 30
           path: |
-            build/esp-brew-engine-merged.bin
+            build/esp-brew-engine-distill-merged.bin
             build/esp-brew-engine.bin
             build/bootloader/bootloader.bin
             build/partition_table/partition-table.bin
