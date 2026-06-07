@@ -28,7 +28,19 @@ jobs:
           args: >-
             -c "
             . /opt/esp/idf/export.sh &&
-            idf.py build
+            idf.py build &&
+            echo '--- Merging into single flashable binary ---' &&
+            esptool.py --chip esp32 merge_bin \
+              --output build/esp-brew-engine-merged.bin \
+              --flash_mode dio \
+              --flash_freq 40m \
+              --flash_size 4MB \
+              0x1000  build/bootloader/bootloader.bin \
+              0x8000  build/partition_table/partition-table.bin \
+              0x35000 build/ota_data_initial.bin \
+              0x110000 build/esp-brew-engine.bin &&
+            echo 'Merged binary size:' &&
+            ls -lh build/esp-brew-engine-merged.bin
             "
 
       - name: Upload firmware binaries
@@ -37,7 +49,9 @@ jobs:
           name: esp-brew-engine-distill-firmware
           retention-days: 30
           path: |
+            build/esp-brew-engine-merged.bin
             build/esp-brew-engine.bin
             build/bootloader/bootloader.bin
             build/partition_table/partition-table.bin
+            build/ota_data_initial.bin
             build/flash_args
