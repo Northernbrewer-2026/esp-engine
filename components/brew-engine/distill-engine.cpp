@@ -60,9 +60,16 @@ void DistillEngine::SetHeaterOutput(uint8_t pct)
 
 // ── Pin helpers ────────────────────────────────────────────────────────────
 
+// Is this pin number a real, usable GPIO? (catches -1 AND any
+// out-of-range value that NVS round-tripping might produce)
+static inline bool isValidPin(gpio_num_t pin)
+{
+    return pin >= 0 && GPIO_IS_VALID_GPIO(pin);
+}
+
 void DistillEngine::initPin(gpio_num_t pin)
 {
-    if (pin == GPIO_NUM_NC) return;
+    if (!isValidPin(pin)) return;
     gpio_reset_pin(pin);
     gpio_set_direction(pin, GPIO_MODE_OUTPUT);
     gpio_set_level(pin, gpioLow);
@@ -70,12 +77,12 @@ void DistillEngine::initPin(gpio_num_t pin)
 
 void DistillEngine::pinHigh(gpio_num_t pin)
 {
-    if (pin != GPIO_NUM_NC) gpio_set_level(pin, gpioHigh);
+    if (isValidPin(pin)) gpio_set_level(pin, gpioHigh);
 }
 
 void DistillEngine::pinLow(gpio_num_t pin)
 {
-    if (pin != GPIO_NUM_NC) gpio_set_level(pin, gpioLow);
+    if (isValidPin(pin)) gpio_set_level(pin, gpioLow);
 }
 
 // ── Valve helpers ──────────────────────────────────────────────────────────
@@ -129,7 +136,7 @@ void DistillEngine::tickValvePWM()
     // the open or close threshold we toggle the physical output.
     for (auto *v : valves)
     {
-        if (v->pinNr == GPIO_NUM_NC) continue;
+        if (!isValidPin(v->pinNr)) continue;
 
         uint16_t openSec  = hp2sec(v->pwmOpenSec);
         uint16_t closeSec = hp2sec(v->pwmCloseSec);
@@ -974,27 +981,29 @@ void DistillEngine::saveSettings()
 
 void DistillEngine::readPins()
 {
-    pins.triac          = (gpio_num_t)settingsManager->Read("dPinTriac",     (uint16_t)GPIO_NUM_NC);
-    pins.pump           = (gpio_num_t)settingsManager->Read("dPinPump",      (uint16_t)GPIO_NUM_NC);
-    pins.mixer          = (gpio_num_t)settingsManager->Read("dPinMixer",     (uint16_t)GPIO_NUM_NC);
-    pins.alarmWater     = (gpio_num_t)settingsManager->Read("dPinAlmWater",  (uint16_t)GPIO_NUM_NC);
-    pins.alarmLevel     = (gpio_num_t)settingsManager->Read("dPinAlmLevel",  (uint16_t)GPIO_NUM_NC);
-    pins.alarmGas       = (gpio_num_t)settingsManager->Read("dPinAlmGas",    (uint16_t)GPIO_NUM_NC);
-    pins.npgLevel       = (gpio_num_t)settingsManager->Read("dPinNPG",       (uint16_t)GPIO_NUM_NC);
-    pins.pressureSensor = (gpio_num_t)settingsManager->Read("dPinPressure",  (uint16_t)GPIO_NUM_NC);
+    // int16_t (not uint16_t) so -1 (GPIO_NUM_NC / "disabled") round-trips
+    // correctly through NVS instead of becoming 65535.
+    pins.triac          = (gpio_num_t)settingsManager->Read("dPinTriac",     (int16_t)GPIO_NUM_NC);
+    pins.pump           = (gpio_num_t)settingsManager->Read("dPinPump",      (int16_t)GPIO_NUM_NC);
+    pins.mixer          = (gpio_num_t)settingsManager->Read("dPinMixer",     (int16_t)GPIO_NUM_NC);
+    pins.alarmWater     = (gpio_num_t)settingsManager->Read("dPinAlmWater",  (int16_t)GPIO_NUM_NC);
+    pins.alarmLevel     = (gpio_num_t)settingsManager->Read("dPinAlmLevel",  (int16_t)GPIO_NUM_NC);
+    pins.alarmGas       = (gpio_num_t)settingsManager->Read("dPinAlmGas",    (int16_t)GPIO_NUM_NC);
+    pins.npgLevel       = (gpio_num_t)settingsManager->Read("dPinNPG",       (int16_t)GPIO_NUM_NC);
+    pins.pressureSensor = (gpio_num_t)settingsManager->Read("dPinPressure",  (int16_t)GPIO_NUM_NC);
     ESP_LOGI(TAG, "Distill pins loaded");
 }
 
 void DistillEngine::savePins()
 {
-    settingsManager->Write("dPinTriac",    (uint16_t)pins.triac);
-    settingsManager->Write("dPinPump",     (uint16_t)pins.pump);
-    settingsManager->Write("dPinMixer",    (uint16_t)pins.mixer);
-    settingsManager->Write("dPinAlmWater", (uint16_t)pins.alarmWater);
-    settingsManager->Write("dPinAlmLevel", (uint16_t)pins.alarmLevel);
-    settingsManager->Write("dPinAlmGas",   (uint16_t)pins.alarmGas);
-    settingsManager->Write("dPinNPG",      (uint16_t)pins.npgLevel);
-    settingsManager->Write("dPinPressure", (uint16_t)pins.pressureSensor);
+    settingsManager->Write("dPinTriac",    (int16_t)pins.triac);
+    settingsManager->Write("dPinPump",     (int16_t)pins.pump);
+    settingsManager->Write("dPinMixer",    (int16_t)pins.mixer);
+    settingsManager->Write("dPinAlmWater", (int16_t)pins.alarmWater);
+    settingsManager->Write("dPinAlmLevel", (int16_t)pins.alarmLevel);
+    settingsManager->Write("dPinAlmGas",   (int16_t)pins.alarmGas);
+    settingsManager->Write("dPinNPG",      (int16_t)pins.npgLevel);
+    settingsManager->Write("dPinPressure", (int16_t)pins.pressureSensor);
     ESP_LOGI(TAG, "Distill pins saved");
 }
 
@@ -1072,7 +1081,7 @@ void DistillEngine::initValveGPIO()
 {
     for (auto *v : valves)
     {
-        if (v->pinNr == GPIO_NUM_NC) continue;
+        if (!isValidPin(v->pinNr)) continue;
         gpio_reset_pin(v->pinNr);
         gpio_set_direction(v->pinNr, GPIO_MODE_OUTPUT);
         gpio_set_level(v->pinNr, v->activeHigh ? gpioLow : gpioHigh); // start closed
