@@ -981,29 +981,32 @@ void DistillEngine::saveSettings()
 
 void DistillEngine::readPins()
 {
-    // int16_t (not uint16_t) so -1 (GPIO_NUM_NC / "disabled") round-trips
-    // correctly through NVS instead of becoming 65535.
-    pins.triac          = (gpio_num_t)settingsManager->Read("dPinTriac",     (int16_t)GPIO_NUM_NC);
-    pins.pump           = (gpio_num_t)settingsManager->Read("dPinPump",      (int16_t)GPIO_NUM_NC);
-    pins.mixer          = (gpio_num_t)settingsManager->Read("dPinMixer",     (int16_t)GPIO_NUM_NC);
-    pins.alarmWater     = (gpio_num_t)settingsManager->Read("dPinAlmWater",  (int16_t)GPIO_NUM_NC);
-    pins.alarmLevel     = (gpio_num_t)settingsManager->Read("dPinAlmLevel",  (int16_t)GPIO_NUM_NC);
-    pins.alarmGas       = (gpio_num_t)settingsManager->Read("dPinAlmGas",    (int16_t)GPIO_NUM_NC);
-    pins.npgLevel       = (gpio_num_t)settingsManager->Read("dPinNPG",       (int16_t)GPIO_NUM_NC);
-    pins.pressureSensor = (gpio_num_t)settingsManager->Read("dPinPressure",  (int16_t)GPIO_NUM_NC);
+    // int8_t (not uint16_t) so -1 (GPIO_NUM_NC / "disabled") round-trips
+    // correctly through NVS instead of becoming 65535. GPIO numbers max
+    // out at 39, so int8_t (-128..127) covers the full valid range plus -1.
+    // NOTE: SettingsManager only overloads bool/uint8_t/int8_t/uint16_t -
+    // int16_t is NOT available and causes an ambiguous-overload error.
+    pins.triac          = (gpio_num_t)settingsManager->Read("dPinTriac",     (int8_t)GPIO_NUM_NC);
+    pins.pump           = (gpio_num_t)settingsManager->Read("dPinPump",      (int8_t)GPIO_NUM_NC);
+    pins.mixer          = (gpio_num_t)settingsManager->Read("dPinMixer",     (int8_t)GPIO_NUM_NC);
+    pins.alarmWater     = (gpio_num_t)settingsManager->Read("dPinAlmWater",  (int8_t)GPIO_NUM_NC);
+    pins.alarmLevel     = (gpio_num_t)settingsManager->Read("dPinAlmLevel",  (int8_t)GPIO_NUM_NC);
+    pins.alarmGas       = (gpio_num_t)settingsManager->Read("dPinAlmGas",    (int8_t)GPIO_NUM_NC);
+    pins.npgLevel       = (gpio_num_t)settingsManager->Read("dPinNPG",       (int8_t)GPIO_NUM_NC);
+    pins.pressureSensor = (gpio_num_t)settingsManager->Read("dPinPressure",  (int8_t)GPIO_NUM_NC);
     ESP_LOGI(TAG, "Distill pins loaded");
 }
 
 void DistillEngine::savePins()
 {
-    settingsManager->Write("dPinTriac",    (int16_t)pins.triac);
-    settingsManager->Write("dPinPump",     (int16_t)pins.pump);
-    settingsManager->Write("dPinMixer",    (int16_t)pins.mixer);
-    settingsManager->Write("dPinAlmWater", (int16_t)pins.alarmWater);
-    settingsManager->Write("dPinAlmLevel", (int16_t)pins.alarmLevel);
-    settingsManager->Write("dPinAlmGas",   (int16_t)pins.alarmGas);
-    settingsManager->Write("dPinNPG",      (int16_t)pins.npgLevel);
-    settingsManager->Write("dPinPressure", (int16_t)pins.pressureSensor);
+    settingsManager->Write("dPinTriac",    (int8_t)pins.triac);
+    settingsManager->Write("dPinPump",     (int8_t)pins.pump);
+    settingsManager->Write("dPinMixer",    (int8_t)pins.mixer);
+    settingsManager->Write("dPinAlmWater", (int8_t)pins.alarmWater);
+    settingsManager->Write("dPinAlmLevel", (int8_t)pins.alarmLevel);
+    settingsManager->Write("dPinAlmGas",   (int8_t)pins.alarmGas);
+    settingsManager->Write("dPinNPG",      (int8_t)pins.npgLevel);
+    settingsManager->Write("dPinPressure", (int8_t)pins.pressureSensor);
     ESP_LOGI(TAG, "Distill pins saved");
 }
 
